@@ -30,3 +30,8 @@ TunaBonyezaModel.prototype.getTypedText = function() {
 TunaBonyezaModel.prototype.typeChar = function(typedChar) {
 	this.typedText += typedChar;
 }
+
+TunaBonyezaModel.prototype.untypeChar = function() {
+	if (this.typedText.length)
+		this.typedText = this.typedText.substr(0, this.typedText.length - 1);
+}

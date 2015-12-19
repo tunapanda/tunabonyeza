@@ -13,14 +13,22 @@ function TunaBonyezaController(view, model) {
 	lessonView.setLessonText(this.tunaBonyezaModel.getLessonText());
 	lessonView.setTypedText(this.tunaBonyezaModel.getTypedText());
 
-	window.addEventListener("keypress", this.onWindowKeypress.bind(this));
+	window.addEventListener("keypress", this.onWindowKey.bind(this));
+	window.addEventListener("keydown", this.onWindowKey.bind(this));
 }
 
 module.exports = TunaBonyezaController;
 
-TunaBonyezaController.prototype.onWindowKeypress = function(ev) {
-	var typedChar = String.fromCharCode(ev.charCode);
-	this.tunaBonyezaModel.typeChar(typedChar);
+TunaBonyezaController.prototype.onWindowKey = function(ev) {
+	if (ev.keyCode == 8) {
+		ev.preventDefault();
+		this.tunaBonyezaModel.untypeChar();
+	} else if (ev.type != "keypress") {
+		return;
+	} else {
+		var typedChar = String.fromCharCode(ev.charCode);
+		this.tunaBonyezaModel.typeChar(typedChar);
+	}
 
 	var lessonView = this.tunaBonyezaView.getLessonView();
 	lessonView.setTypedText(this.tunaBonyezaModel.getTypedText());
