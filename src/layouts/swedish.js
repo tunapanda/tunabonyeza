@@ -12,7 +12,7 @@ module.exports = {
 		"upper": ["Shift", "Z", "X", "C", "V", "B", "N", "M", ";", ":", "_", ">", "Shift"],
 		"lower": ["", "", "", "", "", "", "", "", ",", ".", "-", "<"]
 	}, {
-		"upper": ["Ctrl", "Alt", "", "Alt Gr", "Ctrl"],
+		"upper": ["Ctrl", "Alt", " ", "Alt Gr", "Ctrl"],
 		"lower": [],
 	}],
 

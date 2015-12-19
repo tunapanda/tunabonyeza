@@ -27,6 +27,10 @@ TunaBonyezaController.prototype.onWindowKey = function(ev) {
 		return;
 	} else {
 		var typedChar = String.fromCharCode(ev.charCode);
+
+		if (ev.charCode == 13)
+			typedChar = "\n";
+
 		this.tunaBonyezaModel.typeChar(typedChar);
 	}
 
@@ -34,5 +38,10 @@ TunaBonyezaController.prototype.onWindowKey = function(ev) {
 	lessonView.setTypedText(this.tunaBonyezaModel.getTypedText());
 
 	var keyboardView = this.tunaBonyezaView.getKeyboardView();
-	keyboardView.setCurrent(this.tunaBonyezaModel.getNextChar());
+
+	if (this.tunaBonyezaModel.isCorrect())
+		keyboardView.setCurrent(this.tunaBonyezaModel.getNextChar());
+
+	else
+		keyboardView.setCurrent("Back");
 }

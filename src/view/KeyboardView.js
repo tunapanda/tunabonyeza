@@ -41,22 +41,31 @@ KeyboardView.prototype.highlightKeys = function(keys) {
 
 	keys = keys.toUpperCase();
 
-	for (var i = 0; i < this.keyViews.length; i++)
-		if (keys.indexOf(this.keyViews[i].upper) >= 0 ||
-			keys.indexOf(this.keyViews[i].lower) >= 0)
+	for (var i = 0; i < this.keyViews.length; i++) {
+		if (this.keyViews[i].upper == "Back" ||
+			this.keyViews[i].upper == " " ||
+			this.keyViews[i].upper == "Ret")
+			this.keyViews[i].setHighlight(true)
+
+		else if ((this.keyViews[i].upper && keys.indexOf(this.keyViews[i].upper) >= 0) ||
+			(this.keyViews[i].lower && keys.indexOf(this.keyViews[i].lower) >= 0))
 			this.keyViews[i].setHighlight(true);
+	}
 }
 
 /**
  * Set current.
  */
 KeyboardView.prototype.setCurrent = function(key) {
+	if (key == "\n")
+		key = "Ret";
+
 	if (key)
 		key = key.toUpperCase();
 
 	for (var i = 0; i < this.keyViews.length; i++)
-		if (key && ((key == this.keyViews[i].upper) ||
-				(key == this.keyViews[i].lower)))
+		if (key && ((key == this.keyViews[i].upper.toUpperCase()) ||
+				(key == this.keyViews[i].lower.toUpperCase())))
 			this.keyViews[i].setCurrent(true);
 
 		else

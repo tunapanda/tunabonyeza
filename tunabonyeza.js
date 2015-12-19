@@ -28798,6 +28798,10 @@ TunaBonyezaController.prototype.onWindowKey = function(ev) {
 		return;
 	} else {
 		var typedChar = String.fromCharCode(ev.charCode);
+
+		if (ev.charCode == 13)
+			typedChar = "\n";
+
 		this.tunaBonyezaModel.typeChar(typedChar);
 	}
 
@@ -28805,7 +28809,12 @@ TunaBonyezaController.prototype.onWindowKey = function(ev) {
 	lessonView.setTypedText(this.tunaBonyezaModel.getTypedText());
 
 	var keyboardView = this.tunaBonyezaView.getKeyboardView();
-	keyboardView.setCurrent(this.tunaBonyezaModel.getNextChar());
+
+	if (this.tunaBonyezaModel.isCorrect())
+		keyboardView.setCurrent(this.tunaBonyezaModel.getNextChar());
+
+	else
+		keyboardView.setCurrent("Back");
 }
 },{}],135:[function(require,module,exports){
 /**
@@ -28819,6 +28828,12 @@ function KeyLayoutData(data) {
 	this.width = data.width;
 	this.offset = data.offset;
 	this.finger = data.finger;
+
+	if (!this.upper)
+		this.upper="";
+
+	if (!this.lower)
+		this.lower="";
 }
 
 module.exports = KeyLayoutData;
@@ -28887,7 +28902,7 @@ module.exports = {
 		"upper": ["Shift", "Z", "X", "C", "V", "B", "N", "M", ";", ":", "_", ">", "Shift"],
 		"lower": ["", "", "", "", "", "", "", "", ",", ".", "-", "<"]
 	}, {
-		"upper": ["Ctrl", "Alt", "", "Alt Gr", "Ctrl"],
+		"upper": ["Ctrl", "Alt", " ", "Alt Gr", "Ctrl"],
 		"lower": [],
 	}],
 
@@ -28945,6 +28960,10 @@ TunaBonyezaModel.prototype.untypeChar = function() {
 	if (this.typedText.length)
 		this.typedText = this.typedText.substr(0, this.typedText.length - 1);
 }
+
+TunaBonyezaModel.prototype.isCorrect = function() {
+	return this.lessonText.substr(0, this.typedText.length) == this.typedText;
+}
 },{"../data/KeyboardLayoutData":136,"../layouts/swedish.js":137}],139:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
@@ -28984,6 +29003,9 @@ var inherits = require("inherits");
  */
 function KeyView() {
 	PIXI.Container.call(this);
+
+	this.lower = "";
+	this.upper = "";
 }
 
 inherits(KeyView, PIXI.Container);
@@ -28993,6 +29015,8 @@ module.exports = KeyView;
  * Set highlight.
  */
 KeyView.prototype.setHighlight = function(value) {
+	this.highlighted = value;
+
 	if (value)
 		this.alpha = 1;
 
@@ -29138,22 +29162,31 @@ KeyboardView.prototype.highlightKeys = function(keys) {
 
 	keys = keys.toUpperCase();
 
-	for (var i = 0; i < this.keyViews.length; i++)
-		if (keys.indexOf(this.keyViews[i].upper) >= 0 ||
-			keys.indexOf(this.keyViews[i].lower) >= 0)
+	for (var i = 0; i < this.keyViews.length; i++) {
+		if (this.keyViews[i].upper == "Back" ||
+			this.keyViews[i].upper == " " ||
+			this.keyViews[i].upper == "Ret")
+			this.keyViews[i].setHighlight(true)
+
+		else if ((this.keyViews[i].upper && keys.indexOf(this.keyViews[i].upper) >= 0) ||
+			(this.keyViews[i].lower && keys.indexOf(this.keyViews[i].lower) >= 0))
 			this.keyViews[i].setHighlight(true);
+	}
 }
 
 /**
  * Set current.
  */
 KeyboardView.prototype.setCurrent = function(key) {
+	if (key == "\n")
+		key = "Ret";
+
 	if (key)
 		key = key.toUpperCase();
 
 	for (var i = 0; i < this.keyViews.length; i++)
-		if (key && ((key == this.keyViews[i].upper) ||
-				(key == this.keyViews[i].lower)))
+		if (key && ((key == this.keyViews[i].upper.toUpperCase()) ||
+				(key == this.keyViews[i].lower.toUpperCase())))
 			this.keyViews[i].setCurrent(true);
 
 		else

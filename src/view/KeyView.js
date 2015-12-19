@@ -7,6 +7,9 @@ var inherits = require("inherits");
  */
 function KeyView() {
 	PIXI.Container.call(this);
+
+	this.lower = "";
+	this.upper = "";
 }
 
 inherits(KeyView, PIXI.Container);
@@ -16,6 +19,8 @@ module.exports = KeyView;
  * Set highlight.
  */
 KeyView.prototype.setHighlight = function(value) {
+	this.highlighted = value;
+
 	if (value)
 		this.alpha = 1;
 

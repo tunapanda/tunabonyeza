@@ -35,3 +35,7 @@ TunaBonyezaModel.prototype.untypeChar = function() {
 	if (this.typedText.length)
 		this.typedText = this.typedText.substr(0, this.typedText.length - 1);
 }
+
+TunaBonyezaModel.prototype.isCorrect = function() {
+	return this.lessonText.substr(0, this.typedText.length) == this.typedText;
+}
