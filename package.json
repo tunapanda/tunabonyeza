@@ -12,6 +12,8 @@
     "grunt": "^0.4.5",
     "grunt-browserify": "^4.0.1",
     "pixi.js": "^3.0.8",
-    "pixiapp": "^3.0.1"
+    "pixiapp": "^3.0.1",
+    "tinp": "0.0.4",
+    "yaed": "^1.0.2"
   }
 }

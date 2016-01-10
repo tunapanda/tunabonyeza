@@ -27065,7 +27065,7 @@ Loader.LOAD_TYPE = Resource.LOAD_TYPE;
 Loader.XHR_READY_STATE = Resource.XHR_READY_STATE;
 Loader.XHR_RESPONSE_TYPE = Resource.XHR_RESPONSE_TYPE;
 
-},{"./Resource":127,"async":125,"eventemitter3":3,"url":132}],127:[function(require,module,exports){
+},{"./Resource":127,"async":125,"eventemitter3":3,"url":133}],127:[function(require,module,exports){
 var EventEmitter = require('eventemitter3'),
     _url = require('url'),
     // tests is CORS is supported in XHR, if not we need to use XDR
@@ -27867,7 +27867,7 @@ function setExtMap(map, extname, val) {
     map[extname] = val;
 }
 
-},{"eventemitter3":3,"url":132}],128:[function(require,module,exports){
+},{"eventemitter3":3,"url":133}],128:[function(require,module,exports){
 module.exports = {
 
     // private property
@@ -28030,6 +28030,225 @@ module.exports = function () {
 };
 
 },{"../../Resource":127,"../../b64":128}],132:[function(require,module,exports){
+(function (process){
+/**
+ * A subset of Promises/A+.
+ * @class Thenable
+ */
+function Thenable() {
+	if (!(this instanceof Thenable))
+		return new Thenable();
+
+	this.decided = false;
+	this.handlersUsed = false;
+}
+
+/**
+ * Then.
+ * @method resolve
+ */
+Thenable.prototype.then = function(resolutionHandler, rejectionHandler) {
+	if (this.handlersUsed)
+		throw new Error("Handlers already registered or called.");
+
+	this.handlersUsed = true;
+
+	if ((typeof resolutionHandler) == "object" &&
+		resolutionHandler && !rejectionHandler &&
+		resolutionHandler.then) {
+		var chained = resolutionHandler;
+
+		this.resolutionHandler = chained.resolve.bind(chained);
+		this.rejectionHandler = chained.reject.bind(chained);
+		return;
+	}
+
+	/*	if (typeof resolutionHandler == "object" &&
+		}*/
+
+	this.resolutionHandler = resolutionHandler;
+	this.rejectionHandler = rejectionHandler;
+}
+
+/**
+ * Resolve.
+ * @method resolve
+ */
+Thenable.prototype.resolve = function(result) {
+	if (this.decided)
+		throw new Error("Already decided.");
+
+	this.decided = true;
+	process.nextTick(this.callHandler.bind(this, true, result));
+}
+
+/**
+ * Reject.
+ * @method resolve
+ */
+Thenable.prototype.reject = function(reason) {
+	if (this.decided)
+		throw new Error("Already decided.");
+
+	this.decided = true;
+	process.nextTick(this.callHandler.bind(this, false, reason));
+}
+
+/**
+ * Call handler.
+ * @method callHandler
+ * @private
+ */
+Thenable.prototype.callHandler = function(resolved, parameter) {
+	this.handlersUsed = true;
+
+	var handler;
+
+	if (resolved)
+		handler = this.resolutionHandler;
+
+	else
+		handler = this.rejectionHandler;
+
+	//console.log("in callHandler, handler=" + handler);
+
+	if (handler) {
+		try {
+			handler(parameter);
+		} catch (e) {
+			console.error("Unhandled: " + e);
+			console.log(e.stack);
+			throw e;
+		}
+	}
+}
+
+/**
+ * Return a resolved thenable.
+ * @method resolved
+ */
+Thenable.resolved = function(parameter) {
+	var t = new Thenable();
+	t.resolve(parameter);
+	return t;
+}
+
+/**
+ * Return a rejected thenable.
+ * @method rejected
+ */
+Thenable.rejected = function(parameter) {
+	var t = new Thenable();
+	t.reject(parameter);
+	return t;
+}
+
+/**
+ * Wait for all to resolve or any to reject.
+ * @method all
+ */
+Thenable.all = function( /* ... */ ) {
+	var thenable = new Thenable();
+	var i;
+	var thenables = [];
+	var decided = false;
+	var resolvedCount = 0;
+
+	for (i = 0; i < arguments.length; i++)
+		thenables = thenables.concat(arguments[i]);
+
+	if (!thenables.length)
+		return Thenable.resolved();
+
+	function onResolved() {
+		resolvedCount++;
+
+		if (!decided && resolvedCount >= thenables.length) {
+			decided = true;
+			thenable.resolve();
+		}
+	}
+
+	function onRejected(e) {
+		if (!decided) {
+			decided = true;
+			thenable.reject(e);
+		}
+	}
+
+	for (i = 0; i < thenables.length; i++) {
+		if (!thenables[i])
+			onResolved();
+
+		else
+			thenables[i].then(onResolved, onRejected);
+	}
+
+	return thenable;
+}
+
+/**
+ * Wait for any to resolve or all to reject.
+ * @method all
+ */
+Thenable.race = function( /* ... */ ) {
+	var thenable = new Thenable();
+	var i;
+	var thenables = [];
+	var decided = false;
+	var resolvedCount = 0;
+
+	for (i = 0; i < arguments.length; i++)
+		thenables = thenables.concat(arguments[i]);
+
+	function onRejected() {
+		resolvedCount++;
+
+		if (!decided && resolvedCount >= thenables.length) {
+			decided = true;
+			thenable.reject();
+		}
+	}
+
+	function onResolved(r) {
+		if (!decided) {
+			decided = true;
+			thenable.resolve(r);
+		}
+	}
+
+	for (i = 0; i < thenables.length; i++) {
+		thenables[i].then(onResolved, onRejected);
+	}
+
+	return thenable;
+}
+
+/**
+ * Create a resolved Thenable.
+ * @method resolved
+ */
+Thenable.resolved = function(result) {
+	var t = new Thenable;
+	t.resolve(result);
+
+	return t;
+}
+
+/**
+ * Create a rejected Thenable.
+ * @method rejected
+ */
+Thenable.rejected = function(reason) {
+	var t = new Thenable;
+	t.reject(reason);
+
+	return t;
+}
+
+module.exports = Thenable;
+}).call(this,require('_process'))
+},{"_process":120}],133:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -28738,7 +28957,161 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":121,"querystring":124}],133:[function(require,module,exports){
+},{"punycode":121,"querystring":124}],134:[function(require,module,exports){
+/**
+ * AS3/jquery style event dispatcher. Slightly modified. The
+ * jquery style on/off/trigger style of adding listeners is
+ * currently the preferred one.
+ *
+ * The on method for adding listeners takes an extra parameter which is the
+ * scope in which listeners should be called. So this:
+ *
+ *     object.on("event", listener, this);
+ *
+ * Has the same function when adding events as:
+ *
+ *     object.on("event", listener.bind(this));
+ *
+ * However, the difference is that if we use the second method it
+ * will not be possible to remove the listeners later, unless
+ * the closure created by bind is stored somewhere. If the
+ * first method is used, we can remove the listener with:
+ *
+ *     object.off("event", listener, this);
+ *
+ * @class EventDispatcher
+ */
+function EventDispatcher() {
+	this.listenerMap = {};
+}
+
+/**
+ * Add event listener.
+ * @method addEventListener
+ */
+EventDispatcher.prototype.addEventListener = function(eventType, listener, scope) {
+	if (!this.listenerMap)
+		this.listenerMap = {};
+
+	if (!eventType)
+		throw new Error("Event type required for event dispatcher");
+
+	if (!listener)
+		throw new Error("Listener required for event dispatcher");
+
+	this.removeEventListener(eventType, listener, scope);
+
+	if (!this.listenerMap.hasOwnProperty(eventType))
+		this.listenerMap[eventType] = [];
+
+	this.listenerMap[eventType].push({
+		listener: listener,
+		scope: scope
+	});
+}
+
+/**
+ * Remove event listener.
+ * @method removeEventListener
+ */
+EventDispatcher.prototype.removeEventListener = function(eventType, listener, scope) {
+	if (!this.listenerMap)
+		this.listenerMap = {};
+
+	if (!this.listenerMap.hasOwnProperty(eventType))
+		return;
+
+	var listeners = this.listenerMap[eventType];
+
+	for (var i = 0; i < listeners.length; i++) {
+		var listenerObj = listeners[i];
+
+		if (listener == listenerObj.listener && scope == listenerObj.scope) {
+			listeners.splice(i, 1);
+			i--;
+		}
+	}
+
+	if (!listeners.length)
+		delete this.listenerMap[eventType];
+}
+
+/**
+ * Dispatch event.
+ * @method dispatchEvent
+ */
+EventDispatcher.prototype.dispatchEvent = function(event /* ... */ ) {
+	if (!this.listenerMap)
+		this.listenerMap = {};
+
+	var eventType;
+	var listenerParams;
+
+	if (typeof event == "string") {
+		eventType = event;
+
+		if (arguments.length > 1)
+			listenerParams = Array.prototype.slice.call(arguments, 1);
+
+		else listenerParams = [{
+			type: eventType,
+			target: this
+		}];
+	} else {
+		eventType = event.type;
+		event.target = this;
+		listenerParams = [event];
+	}
+
+	if (!this.listenerMap.hasOwnProperty(eventType))
+		return;
+
+	var map = [];
+	for (var i = 0; i < this.listenerMap[eventType].length; i++)
+		map.push(this.listenerMap[eventType][i])
+
+	for (var i = 0; i < map.length; i++) {
+		var listenerObj = map[i];
+		listenerObj.listener.apply(listenerObj.scope, listenerParams);
+	}
+}
+
+/**
+ * Jquery style alias for addEventListener
+ * @method on
+ */
+EventDispatcher.prototype.on = EventDispatcher.prototype.addEventListener;
+
+/**
+ * Jquery style alias for removeEventListener
+ * @method off
+ */
+EventDispatcher.prototype.off = EventDispatcher.prototype.removeEventListener;
+
+/**
+ * Jquery style alias for dispatchEvent
+ * @method trigger
+ */
+EventDispatcher.prototype.trigger = EventDispatcher.prototype.dispatchEvent;
+
+/**
+ * Make something an event dispatcher. Can be used for multiple inheritance.
+ * @method init
+ * @static
+ */
+EventDispatcher.init = function(cls) {
+	cls.prototype.addEventListener = EventDispatcher.prototype.addEventListener;
+	cls.prototype.removeEventListener = EventDispatcher.prototype.removeEventListener;
+	cls.prototype.dispatchEvent = EventDispatcher.prototype.dispatchEvent;
+	cls.prototype.on = EventDispatcher.prototype.on;
+	cls.prototype.off = EventDispatcher.prototype.off;
+	cls.prototype.trigger = EventDispatcher.prototype.trigger;
+}
+
+if (typeof module !== 'undefined') {
+	module.exports = EventDispatcher;
+}
+},{}],135:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -28755,6 +29128,23 @@ function TunaBonyezaApp() {
 	this.backgroundColor = 0x000000;
 
 	this.tunaBonyezaModel = new TunaBonyezaModel();
+	this.tunaBonyezaModel.on(TunaBonyezaModel.READY, this.onModelReady.bind(this));
+}
+
+inherits(TunaBonyezaApp, PixiApp);
+TunaBonyeza = TunaBonyezaApp;
+
+/**
+ * Load exercise from url.
+ */
+TunaBonyezaApp.prototype.loadExercise = function(url) {
+	this.tunaBonyezaModel.loadExercise(url);
+}
+
+/**
+ *
+ */
+TunaBonyezaApp.prototype.onModelReady = function() {
 	this.tunaBonyezaView = new TunaBonyezaView();
 	this.addChild(this.tunaBonyezaView);
 
@@ -28764,11 +29154,7 @@ function TunaBonyezaApp() {
 			this.tunaBonyezaModel
 		);
 }
-
-inherits(TunaBonyezaApp, PixiApp);
-
-new TunaBonyezaApp();
-},{"../controller/TunaBonyezaController":134,"../model/TunaBonyezaModel":138,"../view/TunaBonyezaView":143,"inherits":4,"pixi.js":100,"pixiapp":119}],134:[function(require,module,exports){
+},{"../controller/TunaBonyezaController":136,"../model/TunaBonyezaModel":140,"../view/TunaBonyezaView":146,"inherits":4,"pixi.js":100,"pixiapp":119}],136:[function(require,module,exports){
 function TunaBonyezaController(view, model) {
 	this.tunaBonyezaView = view;
 	this.tunaBonyezaModel = model;
@@ -28816,7 +29202,7 @@ TunaBonyezaController.prototype.onWindowKey = function(ev) {
 	else
 		keyboardView.setCurrent("Back");
 }
-},{}],135:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 /**
  * Key layout data.
  */
@@ -28837,7 +29223,7 @@ function KeyLayoutData(data) {
 }
 
 module.exports = KeyLayoutData;
-},{}],136:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 var KeyLayoutData = require("./KeyLayoutData");
 
 
@@ -28887,7 +29273,7 @@ KeyboardLayoutData.prototype.getKeyLayoutDatasByLine = function(lineIndex) {
 }
 
 module.exports = KeyboardLayoutData;
-},{"./KeyLayoutData":135}],137:[function(require,module,exports){
+},{"./KeyLayoutData":137}],139:[function(require,module,exports){
 module.exports = {
 	"chars": [{
 		"upper": ["½", "!", '"', "#", "¤", "%", "&", "/", "(", ")", "=", "?", "`", "Back"],
@@ -28922,9 +29308,12 @@ module.exports = {
 		["G", "G", "G", "G", "G"]
 	]
 }
-},{}],138:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 var KeyboardLayoutData = require("../data/KeyboardLayoutData");
 var swedish_layout = require("../layouts/swedish.js");
+var Xhr = require("../utils/Xhr");
+var EventDispatcher = require("yaed");
+var inherits = require("inherits");
 
 function TunaBonyezaModel() {
 	this.layoutDatas = []
@@ -28935,6 +29324,9 @@ function TunaBonyezaModel() {
 }
 
 module.exports = TunaBonyezaModel;
+inherits(TunaBonyezaModel, EventDispatcher);
+
+TunaBonyezaModel.READY = "ready";
 
 TunaBonyezaModel.prototype.getKeybordLayoutDataByName = function() {
 	return this.layoutDatas[0];
@@ -28964,7 +29356,93 @@ TunaBonyezaModel.prototype.untypeChar = function() {
 TunaBonyezaModel.prototype.isCorrect = function() {
 	return this.lessonText.substr(0, this.typedText.length) == this.typedText;
 }
-},{"../data/KeyboardLayoutData":136,"../layouts/swedish.js":137}],139:[function(require,module,exports){
+
+TunaBonyezaModel.prototype.loadExercise = function(url) {
+	this.exerciseXhr = new Xhr(url);
+	this.exerciseXhr.setResponseEncoding(Xhr.JSON);
+	this.exerciseXhr.send().then(
+		function(response) {
+			this.lessonText = response.text;
+			this.trigger(TunaBonyezaModel.READY);
+		}.bind(this)
+	);
+}
+},{"../data/KeyboardLayoutData":138,"../layouts/swedish.js":139,"../utils/Xhr":141,"inherits":4,"yaed":134}],141:[function(require,module,exports){
+var Thenable = require("tinp");
+
+/**
+ * Wrapper for XMLHttpRequest.
+ */
+function Xhr(url) {
+	this.url = url;
+	this.responseEncoding = Xhr.NONE;
+	this.method = "GET";
+}
+
+module.exports = Xhr;
+
+Xhr.NONE = "none";
+Xhr.JSON = "json";
+
+/**
+ * Set url.
+ */
+Xhr.prototype.setUrl = function(url) {
+	this.url = url;
+}
+
+/**
+ * Set response encoding.
+ */
+Xhr.prototype.setResponseEncoding = function(encoding) {
+	this.responseEncoding = encoding;
+}
+
+/**
+ * Send.
+ */
+Xhr.prototype.send = function() {
+	if (this.sendThenable || this.request)
+		throw new Exception("Already used");
+
+	this.sendThenable = new Thenable();
+
+	this.request = new XMLHttpRequest();
+	this.request.onreadystatechange = this.onRequestReadyStateChange.bind(this);
+	this.request.open(this.method, this.url, true);
+	this.request.send();
+
+	return this.sendThenable;
+}
+
+/**
+ * Ready state change.
+ */
+Xhr.prototype.onRequestReadyStateChange = function() {
+	if (this.request.readyState != 4)
+		return;
+
+	if (this.request.status != 200) {
+		this.sendThenable.reject(request.statusText);
+		return;
+	}
+
+	this.response = this.request.responseText;
+
+	switch (this.responseEncoding) {
+		case Xhr.JSON:
+			try {
+				this.response = JSON.parse(this.response);
+			} catch (e) {
+				this.sendThenable.reject("Unable to parse JSON");
+				return;
+			}
+			break;
+	}
+
+	this.sendThenable.resolve(this.response);
+}
+},{"tinp":132}],142:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -28993,7 +29471,7 @@ module.exports = CursorView;
 CursorView.prototype.onFlashInterval = function() {
 	this.g.visible = !this.g.visible;
 }
-},{"inherits":4,"pixi.js":100,"pixiapp":119}],140:[function(require,module,exports){
+},{"inherits":4,"pixi.js":100,"pixiapp":119}],143:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -29118,7 +29596,7 @@ KeyView.prototype.setKeyLayoutData = function(keyLayoutData) {
 	this.upper = keyLayoutData.upper;
 	this.lowe = keyLayoutData.lower;
 }
-},{"inherits":4,"pixi.js":100,"pixiapp":119}],141:[function(require,module,exports){
+},{"inherits":4,"pixi.js":100,"pixiapp":119}],144:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -29217,7 +29695,7 @@ KeyboardView.prototype.setKeyboardLayoutData = function(keyboardLayoutData) {
 
 	this.setCurrent(null);
 }
-},{"./KeyView":140,"inherits":4,"pixi.js":100,"pixiapp":119}],142:[function(require,module,exports){
+},{"./KeyView":143,"inherits":4,"pixi.js":100,"pixiapp":119}],145:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -29286,7 +29764,7 @@ LessonView.prototype.setTypedText = function(text) {
 	this.cursorView.x = this.typedField.x + this.charWidth * col;
 	this.cursorView.y = this.typedField.y + this.charHeight * row;
 }
-},{"./CursorView":139,"inherits":4,"pixi.js":100,"pixiapp":119}],143:[function(require,module,exports){
+},{"./CursorView":142,"inherits":4,"pixi.js":100,"pixiapp":119}],146:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -29322,4 +29800,4 @@ TunaBonyezaView.prototype.getKeyboardView = function() {
 TunaBonyezaView.prototype.getLessonView = function() {
 	return this.lessonView;
 }
-},{"../view/KeyboardView":141,"../view/LessonView":142,"inherits":4,"pixi.js":100,"pixiapp":119}]},{},[133]);
+},{"../view/KeyboardView":144,"../view/LessonView":145,"inherits":4,"pixi.js":100,"pixiapp":119}]},{},[135]);

@@ -14,6 +14,23 @@ function TunaBonyezaApp() {
 	this.backgroundColor = 0x000000;
 
 	this.tunaBonyezaModel = new TunaBonyezaModel();
+	this.tunaBonyezaModel.on(TunaBonyezaModel.READY, this.onModelReady.bind(this));
+}
+
+inherits(TunaBonyezaApp, PixiApp);
+TunaBonyeza = TunaBonyezaApp;
+
+/**
+ * Load exercise from url.
+ */
+TunaBonyezaApp.prototype.loadExercise = function(url) {
+	this.tunaBonyezaModel.loadExercise(url);
+}
+
+/**
+ *
+ */
+TunaBonyezaApp.prototype.onModelReady = function() {
 	this.tunaBonyezaView = new TunaBonyezaView();
 	this.addChild(this.tunaBonyezaView);
 
@@ -23,7 +40,3 @@ function TunaBonyezaApp() {
 			this.tunaBonyezaModel
 		);
 }
-
-inherits(TunaBonyezaApp, PixiApp);
-
-new TunaBonyezaApp();
