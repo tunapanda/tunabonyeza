@@ -2,6 +2,7 @@ var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
 var CursorView = require("./CursorView");
+var PixiTextUtil = require("../utils/PixiTextUtil");
 
 /**
  * Lesson view class.
@@ -20,6 +21,8 @@ function LessonView() {
 		font: "normal 40px monospace",
 		fill: "#a0a0a0"
 	};
+
+	this.style = style;
 
 	this.lessonField = new PIXI.Text("", style);
 	this.lessonField.x = 20;
@@ -60,9 +63,10 @@ LessonView.prototype.setTypedText = function(text) {
 	this.typedField.text = text;
 
 	var split = text.split("\n");
-	var col = split[split.length - 1].length;
-	var row = split.length - 1;
+	var rowIndex = split.length - 1;
+	var lastRowText = split[split.length - 1];
+	var lastRowWidth = PixiTextUtil.getTextWidth(lastRowText, this.style);
 
-	this.cursorView.x = this.typedField.x + this.charWidth * col;
-	this.cursorView.y = this.typedField.y + this.charHeight * row;
+	this.cursorView.x = this.typedField.x + lastRowWidth;
+	this.cursorView.y = this.typedField.y + this.charHeight * rowIndex;
 }

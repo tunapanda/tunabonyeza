@@ -29154,7 +29154,7 @@ TunaBonyezaApp.prototype.onModelReady = function() {
 			this.tunaBonyezaModel
 		);
 }
-},{"../controller/TunaBonyezaController":136,"../model/TunaBonyezaModel":140,"../view/TunaBonyezaView":146,"inherits":4,"pixi.js":100,"pixiapp":119}],136:[function(require,module,exports){
+},{"../controller/TunaBonyezaController":136,"../model/TunaBonyezaModel":140,"../view/TunaBonyezaView":147,"inherits":4,"pixi.js":100,"pixiapp":119}],136:[function(require,module,exports){
 function TunaBonyezaController(view, model) {
 	this.tunaBonyezaView = view;
 	this.tunaBonyezaModel = model;
@@ -29367,7 +29367,29 @@ TunaBonyezaModel.prototype.loadExercise = function(url) {
 		}.bind(this)
 	);
 }
-},{"../data/KeyboardLayoutData":138,"../layouts/swedish.js":139,"../utils/Xhr":141,"inherits":4,"yaed":134}],141:[function(require,module,exports){
+},{"../data/KeyboardLayoutData":138,"../layouts/swedish.js":139,"../utils/Xhr":142,"inherits":4,"yaed":134}],141:[function(require,module,exports){
+/**
+ * Pixi test util.
+ */
+function PixiTextUtil() {}
+module.exports = PixiTextUtil;
+
+/**
+ * Get the width of a text.
+ */
+PixiTextUtil.getTextWidth = function(text, style) {
+	if (!text || text == "")
+		return 0;
+
+	if (!PixiTextUtil.tmpField)
+		PixiTextUtil.tmpField = new PIXI.Text(text, style);
+
+	PixiTextUtil.tmpField.text = text;
+	PixiTextUtil.tmpField.style = style;
+
+	return PixiTextUtil.tmpField.width;
+}
+},{}],142:[function(require,module,exports){
 var Thenable = require("tinp");
 
 /**
@@ -29442,7 +29464,7 @@ Xhr.prototype.onRequestReadyStateChange = function() {
 
 	this.sendThenable.resolve(this.response);
 }
-},{"tinp":132}],142:[function(require,module,exports){
+},{"tinp":132}],143:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -29471,7 +29493,7 @@ module.exports = CursorView;
 CursorView.prototype.onFlashInterval = function() {
 	this.g.visible = !this.g.visible;
 }
-},{"inherits":4,"pixi.js":100,"pixiapp":119}],143:[function(require,module,exports){
+},{"inherits":4,"pixi.js":100,"pixiapp":119}],144:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -29596,7 +29618,7 @@ KeyView.prototype.setKeyLayoutData = function(keyLayoutData) {
 	this.upper = keyLayoutData.upper;
 	this.lowe = keyLayoutData.lower;
 }
-},{"inherits":4,"pixi.js":100,"pixiapp":119}],144:[function(require,module,exports){
+},{"inherits":4,"pixi.js":100,"pixiapp":119}],145:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -29695,11 +29717,12 @@ KeyboardView.prototype.setKeyboardLayoutData = function(keyboardLayoutData) {
 
 	this.setCurrent(null);
 }
-},{"./KeyView":143,"inherits":4,"pixi.js":100,"pixiapp":119}],145:[function(require,module,exports){
+},{"./KeyView":144,"inherits":4,"pixi.js":100,"pixiapp":119}],146:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
 var CursorView = require("./CursorView");
+var PixiTextUtil = require("../utils/PixiTextUtil");
 
 /**
  * Lesson view class.
@@ -29718,6 +29741,8 @@ function LessonView() {
 		font: "normal 40px monospace",
 		fill: "#a0a0a0"
 	};
+
+	this.style = style;
 
 	this.lessonField = new PIXI.Text("", style);
 	this.lessonField.x = 20;
@@ -29758,13 +29783,14 @@ LessonView.prototype.setTypedText = function(text) {
 	this.typedField.text = text;
 
 	var split = text.split("\n");
-	var col = split[split.length - 1].length;
-	var row = split.length - 1;
+	var rowIndex = split.length - 1;
+	var lastRowText = split[split.length - 1];
+	var lastRowWidth = PixiTextUtil.getTextWidth(lastRowText, this.style);
 
-	this.cursorView.x = this.typedField.x + this.charWidth * col;
-	this.cursorView.y = this.typedField.y + this.charHeight * row;
+	this.cursorView.x = this.typedField.x + lastRowWidth;
+	this.cursorView.y = this.typedField.y + this.charHeight * rowIndex;
 }
-},{"./CursorView":142,"inherits":4,"pixi.js":100,"pixiapp":119}],146:[function(require,module,exports){
+},{"../utils/PixiTextUtil":141,"./CursorView":143,"inherits":4,"pixi.js":100,"pixiapp":119}],147:[function(require,module,exports){
 var PIXI = require("pixi.js");
 var PixiApp = require("pixiapp");
 var inherits = require("inherits");
@@ -29800,4 +29826,4 @@ TunaBonyezaView.prototype.getKeyboardView = function() {
 TunaBonyezaView.prototype.getLessonView = function() {
 	return this.lessonView;
 }
-},{"../view/KeyboardView":144,"../view/LessonView":145,"inherits":4,"pixi.js":100,"pixiapp":119}]},{},[135]);
+},{"../view/KeyboardView":145,"../view/LessonView":146,"inherits":4,"pixi.js":100,"pixiapp":119}]},{},[135]);
